@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎡 식당 룰렛 게임</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .roulette-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin: 30px auto;
+            max-width: 90vw;
+            max-height: 90vw;
+        }
+        
+        .arrow {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #ff4757;
+            z-index: 10;
+            filter: drop-shadow(0 3px 5px rgba(0,0,0,0.3));
+        }
+        
+        canvas {
+            border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .button-container {
+            margin-top: 30px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            font-size: 1.3em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 20px;
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result h2 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+        
+        .result p {
+            color: white;
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .result a {
+            display: inline-block;
+            background: white;
+            color: #f5576c;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .result a:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .restaurant-list {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+        
+        .restaurant-list h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .restaurant-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 10px;
+            color: #333;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+            .roulette-container {
+                width: 300px;
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎡 식당 룰렛</h1>
+        <p class="subtitle">오늘의 식당을 행운의 룰렛으로 결정하세요!</p>
+        
+        <div class="roulette-container">
+            <div class="arrow"></div>
+            <canvas id="rouletteCanvas"></canvas>
+        </div>
+        
+        <div class="button-container">
+            <button id="spinButton" onclick="spin()">🎰 룰렛 돌리기!</button>
+        </div>
+        
+        <div id="result" class="result">
+            <h2>🎉 당첨!</h2>
+            <p id="resultText"></p>
+            <a id="resultLink" href="#" target="_blank">📍 네이버 지도에서 보기</a>
+        </div>
+        
+        <div class="restaurant-list">
+            <h3>📋 후보 식당</h3>
+            <div class="restaurant-item">1️⃣ 교내 패컬티 클럽</div>
+            <div class="restaurant-item">2️⃣ yonder</div>
+            <div class="restaurant-item">3️⃣ 비스트로퍼블릭</div>
+            <div class="restaurant-item">4️⃣ 무어</div>
+        </div>
+    </div>
+
+    <script>
+        const restaurants = [
+            { name: '교내 패컬티 클럽', url: null },
+            { name: 'yonder', url: 'https://naver.me/GubwkgEs' },
+            { name: '비스트로퍼블릭', url: 'https://naver.me/xa5RhZjn' },
+            { name: '무어', url: 'https://naver.me/FlZnlGAL' }
+        ];
+        
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A'];
+        const canvas = document.getElementById('rouletteCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinButton = document.getElementById('spinButton');
+        const resultDiv = document.getElementById('result');
+        const resultText = document.getElementById('resultText');
+        const resultLink = document.getElementById('resultLink');
+        
+        let currentRotation = 0;
+        let isSpinning = false;
+        
+        // Canvas 크기 설정
+        function setCanvasSize() {
+            const container = document.querySelector('.roulette-container');
+            const size = Math.min(container.offsetWidth, container.offsetHeight);
+            canvas.width = size;
+            canvas.height = size;
+            drawWheel();
+        }
+        
+        // 룰렛 휠 그리기
+        function drawWheel() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = canvas.width / 2 - 10;
+            const sliceAngle = (2 * Math.PI) / restaurants.length;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(currentRotation);
+            
+            // 각 섹션 그리기
+            restaurants.forEach((restaurant, index) => {
+                const startAngle = index * sliceAngle;
+                const endAngle = startAngle + sliceAngle;
+                
+                // 섹션 배경
+                ctx.beginPath();
+                ctx.fillStyle = colors[index];
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 섹션 테두리
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // 텍스트
+                ctx.save();
+                ctx.rotate(startAngle + sliceAngle / 2);
+                ctx.textAlign = 'center';
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 20px Arial';
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 4;
+                ctx.fillText(restaurant.name, radius * 0.65, 5);
+                ctx.restore();
+            });
+            
+            // 중앙 원
+            ctx.beginPath();
+            ctx.fillStyle = 'white';
+            ctx.arc(0, 0, 30, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        // 룰렛 돌리기
+        function spin() {
+            if (isSpinning) return;
+            
+            isSpinning = true;
+            spinButton.disabled = true;
+            resultDiv.classList.remove('show');
+            
+            // 랜덤 회전 각도 (최소 5바퀴)
+            const randomDegrees = Math.random() * 360 + 1800;
+            const duration = 4000; // 4초
+            const startTime = Date.now();
+            const startRotation = currentRotation;
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Ease out cubic
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                
+                currentRotation = startRotation + (randomDegrees * Math.PI / 180) * easeProgress;
+                drawWheel();
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // 회전 완료 - 결과 계산
+                    const normalizedRotation = currentRotation % (2 * Math.PI);
+                    const sliceAngle = (2 * Math.PI) / restaurants.length;
+                    // 화살표가 위쪽을 가리키므로 각도 조정
+                    const adjustedRotation = (2 * Math.PI - normalizedRotation + Math.PI / 2) % (2 * Math.PI);
+                    const winningIndex = Math.floor(adjustedRotation / sliceAngle);
+                    
+                    showResult(winningIndex);
+                    isSpinning = false;
+                    spinButton.disabled = false;
+                }
+            }
+            
+            animate();
+        }
+        
+        // 결과 표시
+        function showResult(index) {
+            const winner = restaurants[index];
+            resultText.textContent = winner.name;
+            
+            if (winner.url) {
+                resultLink.href = winner.url;
+                resultLink.style.display = 'inline-block';
+            } else {
+                resultLink.style.display = 'none';
+            }
+            
+            setTimeout(() => {
+                resultDiv.classList.add('show');
+            }, 500);
+        }
+        
+        // 초기화
+        window.addEventListener('resize', setCanvasSize);
+        setCanvasSize();
+    </script>
+</body>
+</html>
